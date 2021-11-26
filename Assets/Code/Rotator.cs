@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Rotator : MonoBehaviour
@@ -10,13 +11,21 @@ public class Rotator : MonoBehaviour
         get => m_input;
         set => m_input = value;
     }
+    [SerializeField] private Vector2 m_xRotationRange = new Vector2(-180, 180);
+
+    private void Awake()
+    {
+        var eulerAngles = transform.rotation.eulerAngles;
+        m_rotation.x = eulerAngles.x;
+        m_rotation.y = eulerAngles.y;
+    }
 
     private void Update()
     {
         m_rotation.x += m_rotationSpeed.x * -m_input.y * Time.deltaTime;
+        m_rotation.x = Mathf.Clamp(m_rotation.x, m_xRotationRange.x, m_xRotationRange.y);
         m_rotation.y += m_rotationSpeed.y * m_input.x * Time.deltaTime;
 
-        var rotation = Quaternion.Euler(m_rotation);
-        transform.rotation = rotation;
+        transform.rotation = Quaternion.Euler(m_rotation);
     }
 }

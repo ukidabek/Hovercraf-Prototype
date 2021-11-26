@@ -4,13 +4,41 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class Hovercraft : MonoBehaviour
 {
+    [SerializeField] private BaseHovercraftControlSchema m_controlSchema = null;
+    public BaseHovercraftControlSchema ControlSchema
+    {
+        get => m_controlSchema;
+        set => m_controlSchema = value;
+    }
+
     [SerializeField] private float m_levitationDistance = 1.5f;
-    [SerializeField] private PropulsionEmbitter[] m_leftPropulsionEmitter = null;
-    [SerializeField] private PropulsionEmbitter[] m_rightPropulsionEmitter = null;
-    [SerializeField] private PropulsionEmbitter[] m_propulsionEmitter = null;
-    [SerializeField] private AntiGravityEmitter[] m_antAntiGravityEmitters = null;
-    [SerializeField] private Rigidbody m_rigidbody = null;
+    public float LevitationDistance => m_levitationDistance;
     
+
+    [SerializeField] private PropulsionEmbitter[] m_leftPropulsionEmitter = null;
+    public PropulsionEmbitter[] LeftPropulsionEmitter => m_leftPropulsionEmitter;
+
+    
+    [SerializeField] private PropulsionEmbitter[] m_rightPropulsionEmitter = null;
+    public PropulsionEmbitter[] RightPropulsionEmitter => m_rightPropulsionEmitter;
+
+
+    [SerializeField] private PropulsionEmbitter[] m_propulsionEmitter = null;
+    public PropulsionEmbitter[] PropulsionEmitter => m_propulsionEmitter;
+    
+    [SerializeField] private AntiGravityEmitter[] m_antAntiGravityEmitters = null;
+    public AntiGravityEmitter[] AntAntiGravityEmitters => m_antAntiGravityEmitters;
+
+    [SerializeField] private PropulsionEmbitter[] m_leftSidePropulsionEmitter = null;
+    public PropulsionEmbitter[] LeftSidePropulsionEmitter => m_leftSidePropulsionEmitter;
+    
+    [SerializeField] private PropulsionEmbitter[] m_rightSidePropulsionEmitter = null;
+    public PropulsionEmbitter[] RightSidePropulsionEmitter => m_rightSidePropulsionEmitter;
+
+
+    [SerializeField] private Rigidbody m_rigidbody = null;
+
+
     [SerializeField] private Vector3 m_input = Vector3.zero;
     public Vector3 Input
     {
@@ -18,7 +46,7 @@ public class Hovercraft : MonoBehaviour
         set => m_input = value;
     }
 
-    private List<BaseEmitter> m_embitters = new List<BaseEmitter>();
+    private readonly List<BaseEmitter> m_embitters = new List<BaseEmitter>();
     
     private void Awake()
     {
@@ -26,48 +54,26 @@ public class Hovercraft : MonoBehaviour
         m_embitters.AddRange(m_rightPropulsionEmitter);
         m_embitters.AddRange(m_propulsionEmitter);
         m_embitters.AddRange(m_antAntiGravityEmitters);
+        m_embitters.AddRange(m_leftSidePropulsionEmitter);
+        m_embitters.AddRange(m_rightSidePropulsionEmitter);
     }
 
-    private void Update()
-    {
-        UpdateEmitters(m_leftPropulsionEmitter, Mathf.Clamp(m_input.x,0, 1), transform.right);
-        UpdateEmitters(m_rightPropulsionEmitter, Mathf.Clamp(m_input.x,-1, 0), transform.right);
-        UpdateEmitters(m_propulsionEmitter, m_input.z, transform.forward);
-        UpdateAntiGravityEmitters();
-    }
+    private void Update() => m_controlSchema?.Control(this, m_input);
 
-    private void UpdateEmitters(IEnumerable<PropulsionEmbitter> embitters, float input, Vector3 direction)
-    {
-        foreach (var VARIABLE in embitters)
-        {
-            VARIABLE.Output = input;
-            VARIABLE.Direction = direction;
-        }
-    }
-
-    private void UpdateAntiGravityEmitters()
-    {
-        var gravityDirection = transform.up;
-        var emitterLength = m_levitationDistance + 0.5f;
-        foreach (var emitter in m_antAntiGravityEmitters)
-        {
-            emitter.Length = emitterLength;
-            emitter.Direction = gravityDirection;
-        }
-    }
-
-    private void FixedUpdate()
+    private void ApplyForces()
     {
         var rigidbody = m_rigidbody;
         var transform = this.transform;
-        
+
         foreach (var emitter in m_embitters)
         {
             var position = emitter.transform.localPosition;
             position = transform.TransformPoint(position);
             rigidbody.AddForceAtPosition(emitter.OutputForce, position);
-        }    
+        }
     }
+
+    private void FixedUpdate() => ApplyForces();
 
     private void Reset()
     {
