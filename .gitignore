@@ -26,4 +26,5 @@ UnityVS
 /*.userprefs
 /.gradle
 /obj
+/Logs
 *.blend1*
